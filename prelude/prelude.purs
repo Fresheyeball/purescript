@@ -668,10 +668,38 @@ module Prelude
   infixr 2 ||
   infixr 3 &&
 
-  class BoolLike b where
-    (&&) :: b -> b -> b
-    (||) :: b -> b -> b
+  class (Semiring b) <= BoolLike b where
     not :: b -> b
+
+  (&&) :: forall b. (BoolLike b) => b -> b -> b
+  (&&) = (+)
+  (||) :: forall b. (BoolLike b) => b -> b -> b
+  (||) = (*)
+
+  newtype Reflected a = Reflected a
+
+  instance functorReflected :: Functor Reflected where
+    (<$>) f (Reflected x) =  Reflected (f x)
+
+  instance applyReflected :: Apply Reflected where
+    (<*>) (Reflected fx) (Reflected y) = Reflected (fx y)
+
+  instance applicativeReflected :: Applicative Reflected where
+    pure = Reflected
+
+  instance bindReflected :: Bind Reflected where
+    (>>=) (Reflected x) f = f x
+    
+  instance monadReflected :: Monad Reflected      
+
+  instance semiringReflected :: (Semiring a) => Semiring (Reflected a) where
+    (+) (Reflected x) (Reflected x') = Reflected (x * x')
+    zero = Reflected one
+    (*) (Reflected x) (Reflected x') = Reflected (x + x')
+    one  = Reflected zero
+
+  instance boolLikeReflected :: (BoolLike b) => BoolLike (Reflected b) where
+    not (Reflected x) = Reflected (not x)
 
   foreign import boolAnd
     """
@@ -698,9 +726,13 @@ module Prelude
     }
     """ :: Boolean -> Boolean
 
+  instance semiringBoolean :: Semiring Boolean where
+    (+) = boolAnd
+    zero = true
+    (*) = boolOr
+    one = false
+
   instance boolLikeBoolean :: BoolLike Boolean where
-    (&&) = boolAnd
-    (||) = boolOr
     not = boolNot
 
   infixr 5 <>
