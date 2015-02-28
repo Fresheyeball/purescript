@@ -27,6 +27,7 @@ module Prelude
   , not
   , Semigroup, (<>), (++)
   , Unit(..), unit
+  , Reflected(..)
   ) where
 
   -- | An alias for `true`, which can be useful in guard clauses:
